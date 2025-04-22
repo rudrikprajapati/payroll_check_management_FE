@@ -46,8 +46,7 @@ export default function StoresPage() {
   const router = useRouter();
   const [stores, setStores] = useState<Store[]>([]);
   const [isAddingStore, setIsAddingStore] = useState(false);
-
-  const user: User = JSON.parse(localStorage.getItem("user") || "{}");
+  const [user, setUser] = useState<User | null>(null);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -58,17 +57,34 @@ export default function StoresPage() {
   });
 
   useEffect(() => {
-    fetchStores();
+    // Get user data from localStorage
+    const userData = localStorage.getItem("user");
+    if (userData) {
+      try {
+        const parsedUser = JSON.parse(userData);
+        setUser(parsedUser);
+      } catch (error) {
+        console.error("Error parsing user data:", error);
+      }
+    }
   }, []);
 
+  useEffect(() => {
+    if (user?.user_id) {
+      fetchStores();
+    }
+  }, [user]);
+
   const fetchStores = async () => {
+    if (!user?.user_id) return;
+
     try {
       const response = await fetch("http://localhost:8080/store/get", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ user_id: user?.user_id }),
+        body: JSON.stringify({ user_id: user.user_id }),
       });
       const data = await response.json();
       setStores(data);
@@ -78,6 +94,8 @@ export default function StoresPage() {
   };
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
+    if (!user?.user_id) return;
+
     try {
       const response = await fetch("http://localhost:8080/store/create", {
         method: "POST",
@@ -85,7 +103,7 @@ export default function StoresPage() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          user_id: user?.user_id,
+          user_id: user.user_id,
           store_name: values.store_name,
           address: values.address,
         }),
