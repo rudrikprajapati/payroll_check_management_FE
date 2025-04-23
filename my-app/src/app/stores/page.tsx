@@ -15,27 +15,7 @@ import {
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-
-interface Store {
-  store_id: number;
-  user_id: number;
-  store_name: string;
-  address: string;
-  is_deleted: boolean;
-  created_at: string;
-  updated_at: string;
-  updated_by: string | null;
-}
-
-interface User {
-  user_id: number;
-  full_name: string;
-  username: string;
-  email: string;
-  password: string;
-  created_at: string;
-  updated_at: string;
-}
+import { Store, User } from "../_types";
 
 const formSchema = z.object({
   store_name: z.string().min(1, "Store name is required"),
@@ -175,26 +155,37 @@ export default function StoresPage() {
       )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {stores.map((store) => (
-          <div
-            key={store.store_id}
-            className="bg-white rounded-lg shadow-md p-6 cursor-pointer hover:shadow-lg transition-shadow"
-            onClick={() => router.push(`/stores/${store.store_id}/employees`)}
-          >
-            <h2 className="text-xl font-semibold mb-2">{store.store_name}</h2>
-            <p className="text-gray-600 mb-4">{store.address}</p>
-            <div className="text-sm text-gray-500">
-              <p>Created: {new Date(store.created_at).toLocaleDateString()}</p>
-              {store.updated_by && <p>Last updated by: {store.updated_by}</p>}
-            </div>
+        {!stores && !isAddingStore ? (
+          <div className="text-center text-gray-600 mt-8">
+            <p>You have no stores. Please add a store to get started.</p>
           </div>
-        ))}
+        ) : (
+          <>
+            {stores?.map((store) => (
+              <div
+                key={store.store_id}
+                className="bg-white rounded-lg shadow-md p-6 cursor-pointer hover:shadow-lg transition-shadow"
+                onClick={() =>
+                  router.push(`/stores/${store.store_id}/employees`)
+                }
+              >
+                <h2 className="text-xl font-semibold mb-2">
+                  {store.store_name}
+                </h2>
+                <p className="text-gray-600 mb-4">{store.address}</p>
+                <div className="text-sm text-gray-500">
+                  <p>
+                    Created: {new Date(store.created_at).toLocaleDateString()}
+                  </p>
+                  {store.updated_by && (
+                    <p>Last updated by: {store.updated_by}</p>
+                  )}
+                </div>
+              </div>
+            ))}
+          </>
+        )}
       </div>
-      {stores.length === 0 && !isAddingStore && (
-        <div className="text-center text-gray-600 mt-8">
-          <p>You have no stores. Please add a store to get started.</p>
-        </div>
-      )}
     </div>
   );
 }

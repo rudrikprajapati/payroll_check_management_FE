@@ -65,14 +65,24 @@ export default function RegisterPage() {
         throw new Error("Registration failed");
       }
 
-      const user = await response.json();
+      const user = await fetch("http://localhost:8080/user/get", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email: values.email,
+        }),
+      });
 
-      if (user) {
-        localStorage.setItem("user", JSON.stringify(user));
-        router.push("/store");
+      const userData = await user.json();
+      
+      if (userData && userData.user_id) {
+        localStorage.setItem("user", JSON.stringify(userData));
+        router.push("/stores");
       } else {
         form.setError("root", {
-          message: "Registration failed",
+          message: "Please try again.",
         });
       }
     } catch (error) {

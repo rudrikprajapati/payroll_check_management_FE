@@ -23,12 +23,16 @@ export default function Home() {
     router.push("/login");
   };
 
+  const handleRegister = (): void => {
+    router.push("/register");
+  };
+
   return (
     <main className="min-h-screen bg-gradient-to-b from-blue-50 to-white">
       <div className="container mx-auto px-4 py-16">
-        <div className="flex justify-end mb-8">
+        <div className="flex justify-end gap-4 mb-8">
           {isAuthenticated ? (
-            <Button
+            <Button 
               onClick={handleLogout}
               variant="outline"
               className="text-blue-800 hover:bg-blue-50"
@@ -36,12 +40,21 @@ export default function Home() {
               Logout
             </Button>
           ) : (
-            <Button
-              onClick={handleLogin}
-              className="bg-blue-800 hover:bg-blue-900 text-white"
-            >
-              Login
-            </Button>
+            <>
+              <Button 
+                onClick={handleLogin}
+                className="bg-blue-800 hover:bg-blue-900 text-white"
+              >
+                Login
+              </Button>
+              <Button 
+                onClick={handleRegister}
+                variant="outline"
+                className="text-blue-800 hover:bg-blue-50"
+              >
+                Register
+              </Button>
+            </>
           )}
         </div>
         <h1 className="text-4xl md:text-5xl font-bold text-center text-blue-800 mb-4">

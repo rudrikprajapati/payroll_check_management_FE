@@ -16,16 +16,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { useEmployee } from "@/contexts/EmployeeContext";
-
-export interface Employee {
-  id: number;
-  store_id: number;
-  full_name: string;
-  employee_code: string;
-  mobile_number: string;
-  created_at: string;
-  updated_at: string;
-}
+import { Employee } from "@/app/_types";
 
 const formSchema = z.object({
   full_name: z.string().min(1, "Full name is required"),
@@ -201,7 +192,8 @@ export default function EmployeesPage() {
                 </p>
                 <div className="text-sm text-gray-500 mb-4">
                   <p>
-                    Created: {new Date(employee.created_at).toLocaleDateString()}
+                    Created:{" "}
+                    {new Date(employee.created_at).toLocaleDateString()}
                   </p>
                 </div>
                 <Button

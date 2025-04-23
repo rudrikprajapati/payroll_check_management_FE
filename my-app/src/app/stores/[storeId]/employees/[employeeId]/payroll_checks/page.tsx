@@ -16,31 +16,12 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { useEmployee } from "@/contexts/EmployeeContext";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Badge } from "@/components/ui/badge";
-import { cn } from "@/lib/utils";
-import { Employee } from "../../page";
 import { uid } from "uid";
-
-interface PayrollCheck {
-  check_id: number;
-  employee_id: number;
-  phone_number: string;
-  check_number: string;
-  check_amount: number;
-  transaction_date: string;
-  status: string;
-  location: string;
-  created_at: string;
-  updated_at: string;
-}
+import { BlockNumberAlert } from "@/app/_components/Dialogs/BlockNumberAlert";
+import { ConfirmationDialog } from "@/app/_components/Dialogs/Confirmation";
+import { BlockNumberReasonDialog } from "@/app/_components/Dialogs/BlockNumberReasonDialog";
+import { PayrollCard } from "@/app/_components/payroll/PayrollCard";
+import { Employee, PayrollCheck } from "@/app/_types";
 
 const formSchema = z.object({
   phone_number: z.string().min(10, "Phone number must be at least 10 digits"),
@@ -168,6 +149,7 @@ export default function PayrollChecksPage() {
 
   const handlePayCheck = async (check: PayrollCheck) => {
     try {
+      console.log({ check });
       const response = await fetch(
         "http://localhost:8080/payroll-check/update",
         {
@@ -410,175 +392,40 @@ export default function PayrollChecksPage() {
             <p>No payroll checks found. Please add a check to get started.</p>
           </div>
         ) : (
-          payrollChecks.map((check) => (
-            <div
-              key={check.check_id}
-              className="bg-white rounded-lg shadow-md p-6"
-            >
-              <h2 className="text-xl font-semibold mb-2">
-                Check #{check.check_number}
-              </h2>
-              <p className="text-gray-600 mb-2">
-                Amount: ${check.check_amount.toFixed(2)}
-              </p>
-              <p className="text-gray-600 mb-2">Phone: {check.phone_number}</p>
-              <p className="text-gray-600 mb-2">
-                Status:{" "}
-                <Badge
-                  className={cn(
-                    "text-sm",
-                    check.status === "COMPLETED" &&
-                      "bg-green-100 text-green-800",
-                    check.status === "REJECTED" && "bg-red-100 text-red-800",
-                    check.status === "PENDING" &&
-                      "bg-yellow-100 text-yellow-800"
-                  )}
-                >
-                  {check.status}
-                </Badge>
-              </p>
-              <p className="text-gray-600 mb-2">Location: {check.location}</p>
-              <p className="text-gray-600 mb-2">
-                Date: {new Date(check.transaction_date).toLocaleDateString()}
-              </p>
-              <div className="text-sm text-gray-500">
-                <p>
-                  Created: {new Date(check.created_at).toLocaleDateString()}
-                </p>
-              </div>
-              {check.status === "PENDING" && (
-                <div className="flex gap-2 mt-4">
-                  <Button
-                    onClick={() => handleAction(check, "pay")}
-                    className="flex-1"
-                    variant="default"
-                  >
-                    Pay
-                  </Button>
-                  <Button
-                    onClick={() => handleAction(check, "reject")}
-                    className="flex-1"
-                    variant="destructive"
-                  >
-                    Reject
-                  </Button>
-                </div>
-              )}
-            </div>
+          payrollChecks.map((check, index) => (
+            <>
+              <PayrollCard
+                key={index}
+                check={check}
+                handleAction={handleAction}
+              />
+              {/* <pre>{JSON.stringify(check, null, 2)}</pre> */}
+            </>
           ))
         )}
       </div>
 
-      {/* Block Phone Dialog */}
-      <Dialog open={isBlockDialogOpen} onOpenChange={setIsBlockDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Block Phone Number</DialogTitle>
-            <DialogDescription>
-              Please provide a reason for blocking this phone number.
-            </DialogDescription>
-          </DialogHeader>
-          <Form {...blockForm}>
-            <form
-              onSubmit={blockForm.handleSubmit(() =>
-                setIsConfirmDialogOpen(true)
-              )}
-              className="space-y-4"
-            >
-              <FormField
-                control={blockForm.control}
-                name="reason"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Reason</FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder="Enter reason for blocking"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <DialogFooter>
-                <Button type="submit">Continue</Button>
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setIsBlockDialogOpen(false)}
-                >
-                  Cancel
-                </Button>
-              </DialogFooter>
-            </form>
-          </Form>
-        </DialogContent>
-      </Dialog>
+      <BlockNumberReasonDialog
+        blockForm={blockForm}
+        isBlockDialogOpen={isBlockDialogOpen}
+        setIsBlockDialogOpen={setIsBlockDialogOpen}
+        setIsConfirmDialogOpen={setIsConfirmDialogOpen}
+      />
 
-      {/* Confirmation Dialog */}
-      <Dialog open={isConfirmDialogOpen} onOpenChange={setIsConfirmDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>
-              {actionType === "pay" ? "Confirm Payment" : "Confirm Rejection"}
-            </DialogTitle>
-            <DialogDescription>
-              {actionType === "pay"
-                ? "Are you sure you want to mark this check as paid?"
-                : "Are you sure you want to reject this check and block the phone number?"}
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button
-              onClick={() => {
-                if (selectedCheck) {
-                  if (actionType === "pay") {
-                    handlePayCheck(selectedCheck);
-                  } else {
-                    handleRejectCheck(selectedCheck);
-                  }
-                }
-              }}
-            >
-              Confirm
-            </Button>
-            <Button
-              variant="outline"
-              onClick={() => setIsConfirmDialogOpen(false)}
-            >
-              Cancel
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <ConfirmationDialog
+        actionType={actionType}
+        handlePayCheck={handlePayCheck}
+        handleRejectCheck={handleRejectCheck}
+        isConfirmDialogOpen={isConfirmDialogOpen}
+        selectedCheck={selectedCheck}
+        setIsConfirmDialogOpen={setIsConfirmDialogOpen}
+      />
 
-      {/* Blocked Phone Alert Dialog */}
-      <Dialog open={isBlockedAlertOpen} onOpenChange={setIsBlockedAlertOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Warning: Blocked Phone Number</DialogTitle>
-            <DialogDescription>
-              This phone number is currently blocked. Are you sure you want to
-              proceed with the payment?
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter className="flex gap-2">
-            <Button
-              variant="destructive"
-              onClick={handleProceedWithBlockedPhone}
-            >
-              Proceed Anyway
-            </Button>
-            <Button
-              variant="outline"
-              onClick={() => setIsBlockedAlertOpen(false)}
-            >
-              Cancel
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <BlockNumberAlert
+        handleProceedWithBlockedPhone={handleProceedWithBlockedPhone}
+        isBlockedAlertOpen={isBlockedAlertOpen}
+        setIsBlockedAlertOpen={setIsBlockedAlertOpen}
+      />
     </div>
   );
 }
